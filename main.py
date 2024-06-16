@@ -10,17 +10,19 @@ import logging
 class RecommendationService(recommendation_pb2_grpc.RecommendationServiceServicer):
     def __init__(self):
         self.user_item_matrix, self.item_similarity_df = self.get_user_item_matrix_and_item_similarity()
-
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
 
 
     def get_user_item_matrix_and_item_similarity(self):
+        logging.info('data loading...')
         user_item_matrix = pd.read_csv('user_movie_df.csv', index_col=0)
         item_similarity_df = pd.read_csv('item_similarity.csv', index_col=0)
 
         user_item_matrix.index.name = 'id'
 
         print("service is already running")
+        logging.info('data loaded successfully.')
+        logging.info('service is already running.')
 
         return user_item_matrix, item_similarity_df
 
@@ -49,9 +51,11 @@ class RecommendationService(recommendation_pb2_grpc.RecommendationServiceService
     def GetRecommendations(self, request, context):
         user_id = request.user_id
         print(f'GetRecommendations for user {user_id}')
+        logging.info('request received: ',request)
         try:
             recommended_movies = self.recommend_movies(user_id)
             print(f'Recommended movies: {recommended_movies}')
+            logging.info('Recommended movies: ',recommended_movies)
             return recommendation_pb2.RecommendationResponse(movie_ids=recommended_movies)
         except Exception as e:
             print(f'Error: {e}')
