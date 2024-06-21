@@ -63,6 +63,21 @@ class RecommendationService(recommendation_pb2_grpc.RecommendationServiceService
             context.set_code(grpc.StatusCode.UNKNOWN)
             return recommendation_pb2.RecommendationResponse()
 
+    def GetRecommendationsByMovieId(self, request, context):
+        movie_id = request.movie_id
+        print(f'GetRecommendationsByMovieId for movie {movie_id}')
+        logging.info('request received: ', request)
+        try:
+            recommended_movies = self.recommend_movies(movie_id)
+            print(f'Recommended movies: {recommended_movies}')
+            logging.info('Recommended movies: ',recommended_movies)
+            return recommendation_pb2.RecommendationResponse(movie_ids=recommended_movies)
+        except Exception as e:
+            print(f'Error: {e}')
+            context.set_details(str(e))
+            context.set_code(grpc.StatusCode.UNKNOWN)
+            return recommendation_pb2.RecommendationResponse()
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
