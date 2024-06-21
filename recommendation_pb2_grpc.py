@@ -44,6 +44,11 @@ class RecommendationServiceStub(object):
                 request_serializer=recommendation__pb2.RecommendationRequest.SerializeToString,
                 response_deserializer=recommendation__pb2.RecommendationResponse.FromString,
                 _registered_method=True)
+        self.GetRecommendationsByMovieId = channel.unary_unary(
+                '/recommendation.RecommendationService/GetRecommendationsByMovieId',
+                request_serializer=recommendation__pb2.RMRequest.SerializeToString,
+                response_deserializer=recommendation__pb2.RecommendationResponse.FromString,
+                _registered_method=True)
 
 
 class RecommendationServiceServicer(object):
@@ -55,12 +60,23 @@ class RecommendationServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetRecommendationsByMovieId(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RecommendationServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetRecommendations': grpc.unary_unary_rpc_method_handler(
                     servicer.GetRecommendations,
                     request_deserializer=recommendation__pb2.RecommendationRequest.FromString,
+                    response_serializer=recommendation__pb2.RecommendationResponse.SerializeToString,
+            ),
+            'GetRecommendationsByMovieId': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRecommendationsByMovieId,
+                    request_deserializer=recommendation__pb2.RMRequest.FromString,
                     response_serializer=recommendation__pb2.RecommendationResponse.SerializeToString,
             ),
     }
@@ -90,6 +106,33 @@ class RecommendationService(object):
             target,
             '/recommendation.RecommendationService/GetRecommendations',
             recommendation__pb2.RecommendationRequest.SerializeToString,
+            recommendation__pb2.RecommendationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetRecommendationsByMovieId(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/recommendation.RecommendationService/GetRecommendationsByMovieId',
+            recommendation__pb2.RMRequest.SerializeToString,
             recommendation__pb2.RecommendationResponse.FromString,
             options,
             channel_credentials,

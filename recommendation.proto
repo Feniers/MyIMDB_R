@@ -4,6 +4,12 @@ package recommendation;
 
 service RecommendationService {
   rpc GetRecommendations (RecommendationRequest) returns (RecommendationResponse);
+
+  rpc GetRecommendationsByMovieId (RMRequest) returns (RecommendationResponse);
+}
+
+message RMRequest {
+  int32 movie_id = 1;
 }
 
 message RecommendationRequest {
