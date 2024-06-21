@@ -1,5 +1,7 @@
 from concurrent import futures
 import grpc
+import numpy as np
+
 import recommendation_pb2
 import recommendation_pb2_grpc
 import pandas as pd
@@ -9,9 +11,8 @@ import logging
 
 class RecommendationService(recommendation_pb2_grpc.RecommendationServiceServicer):
     def __init__(self):
-        self.user_item_matrix, self.item_similarity_df = self.get_user_item_matrix_and_item_similarity()
+        self.user_item_matrix, self.item_similarity_df, self.tfidf_matrix, self.indices, self.cosine_sim = self.get_user_item_matrix_and_item_similarity()
         logging.basicConfig(level=logging.INFO)
-
 
     def get_user_item_matrix_and_item_similarity(self):
         logging.info('data loading...')
@@ -20,11 +21,18 @@ class RecommendationService(recommendation_pb2_grpc.RecommendationServiceService
 
         user_item_matrix.index.name = 'id'
 
+        # 加载 tfidf_matrix 和 indices
+        tfidf_matrix = np.load('tfidf_matrix.npy')
+        indices = pd.read_csv('movie_indices.csv', index_col=0)['title']
+
+        # 加载相似度矩阵
+        cosine_sim = np.load('cosine_similarity_matrix.npy')
+
         print("service is already running")
         logging.info('data loaded successfully.')
         logging.info('service is already running.')
 
-        return user_item_matrix, item_similarity_df
+        return user_item_matrix, item_similarity_df, tfidf_matrix, indices, cosine_sim
 
     def recommend_movies(self, user_id, top_n=10):
         # 获取用户已评分的电影及评分
@@ -48,14 +56,22 @@ class RecommendationService(recommendation_pb2_grpc.RecommendationServiceService
         recommended_movies = scores.sort_values(ascending=False).head(top_n).index
         return recommended_movies
 
+    def recommend_movies_by_movieId(self, movie_id, top_n=10):
+        idx = self.indices[movie_id]
+        sim_scores = list(enumerate(self.cosine_sim[idx]))
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        sim_scores = sim_scores[1:11]  # 排除自身，取前10个相似电影
+        movie_indices = [i[0] for i in sim_scores]
+        return movie_indices
+
     def GetRecommendations(self, request, context):
         user_id = request.user_id
         print(f'GetRecommendations for user {user_id}')
-        logging.info('request received: ',request)
+        logging.info('request received: ', request)
         try:
             recommended_movies = self.recommend_movies(user_id)
             print(f'Recommended movies: {recommended_movies}')
-            logging.info('Recommended movies: ',recommended_movies)
+            logging.info('Recommended movies: ', recommended_movies)
             return recommendation_pb2.RecommendationResponse(movie_ids=recommended_movies)
         except Exception as e:
             print(f'Error: {e}')
@@ -68,9 +84,9 @@ class RecommendationService(recommendation_pb2_grpc.RecommendationServiceService
         print(f'GetRecommendationsByMovieId for movie {movie_id}')
         logging.info('request received: ', request)
         try:
-            recommended_movies = self.recommend_movies(movie_id)
+            recommended_movies = self.recommend_movies_by_movieId(movie_id)
             print(f'Recommended movies: {recommended_movies}')
-            logging.info('Recommended movies: ',recommended_movies)
+            logging.info('Recommended movies: ', recommended_movies)
             return recommendation_pb2.RecommendationResponse(movie_ids=recommended_movies)
         except Exception as e:
             print(f'Error: {e}')
